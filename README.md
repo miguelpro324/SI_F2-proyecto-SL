@@ -10,3 +10,11 @@ source .venv/bin/activate
 pip install -r requirements.txt
 streamlit run app.py
 ```
+
+## Ejecutar scripts standalone
+
+```bash
+python logistic_regression.py
+python svm.py
+python decision_tree.py
+```
