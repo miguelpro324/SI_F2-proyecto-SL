@@ -20,11 +20,37 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import LinearSVC
+from sklearn.utils import resample
 
 matplotlib.use("Agg")
 
 DATA_PATH = Path(__file__).resolve().parent / "creditcard.csv"
 OUTPUT_DIR = Path(__file__).resolve().parent / "reports" / "svm"
+
+
+def balance_training_data(
+    x_train: pd.DataFrame, y_train: pd.Series, random_state: int
+) -> tuple[pd.DataFrame, pd.Series]:
+    train_data = x_train.copy()
+    train_data["Class"] = y_train.values
+
+    majority = train_data[train_data["Class"] == 0]
+    minority = train_data[train_data["Class"] == 1]
+
+    if minority.empty or majority.empty:
+        return x_train, y_train
+
+    majority_downsampled = resample(
+        majority,
+        replace=False,
+        n_samples=len(minority),
+        random_state=random_state,
+    )
+
+    balanced = pd.concat([majority_downsampled, minority]).sample(
+        frac=1, random_state=random_state
+    )
+    return balanced.drop(columns=["Class"]), balanced["Class"]
 
 
 def main() -> None:
@@ -41,6 +67,7 @@ def main() -> None:
     x_train, x_test, y_train, y_test = train_test_split(
         x, y, test_size=0.2, random_state=42, stratify=y
     )
+    x_train, y_train = balance_training_data(x_train, y_train, random_state=42)
 
     model = Pipeline(
         [
